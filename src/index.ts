@@ -5,7 +5,7 @@ import jayson from 'jayson';
 import EosEvmMiner from './miner';
 import {logger} from "./logger";
 
-const { PRIVATE_KEY, MINER_ACCOUNT, RPC_ENDPOINTS, PORT = 50305, LOCK_GAS_PRICE = "true" } = process.env;
+const { PRIVATE_KEY, MINER_ACCOUNT, RPC_ENDPOINTS, PORT = 50305, LOCK_GAS_PRICE = "true", MINER_PERMISSION = "active", EXPIRE_SEC = 60 } = process.env;
 
 const quit = (error:string) => {
     logger.error(error);
@@ -21,7 +21,14 @@ if(!rpcEndpoints.length) quit('Not enough RPC_ENDPOINTS');
 
 let lockGasPrice:boolean = LOCK_GAS_PRICE === "true";
 
-const eosEvmMiner = new EosEvmMiner(PRIVATE_KEY, MINER_ACCOUNT, rpcEndpoints, lockGasPrice);
+const eosEvmMiner = new EosEvmMiner({
+    privateKey: PRIVATE_KEY,
+    minerAccount: MINER_ACCOUNT,
+    minerPermission: MINER_PERMISSION,
+    rpcEndpoints,
+    lockGasPrice,
+    expireSec: +EXPIRE_SEC
+});
 
 const server = new jayson.Server({
     eth_sendRawTransaction: function(params, callback) {

@@ -6,30 +6,44 @@ import { keccak256 } from 'ethereumjs-util';
 import {logger} from "./logger";
 
 
+export interface MinerConfig {
+    privateKey?: string;
+    minerAccount?: string;
+    minerPermission?: string;
+    rpcEndpoints?: Array<string>;
+    lockGasPrice?: boolean;
+    expireSec?: number;
+}
+
 export default class EosEvmMiner {
     currentRpcEndpoint: number = 0;
     rpc: JsonRpc;
     api: Api;
     lastGetTableCallTime: number = 0;
     gasPrice: string = "0x1";
+    pushCount: number = 0;
 
-    constructor(public readonly privateKey: string, public readonly minerAccount: string, public readonly rpcEndpoints: Array<string>, public readonly lockGasPrice: boolean = true) {
-        this.currentRpcEndpoint = this.rpcEndpoints.length - 1;
+    constructor(public readonly config: MinerConfig) {
+        this.currentRpcEndpoint = this.config.rpcEndpoints.length - 1;
         this.swapRpcEndpoint();
     }
 
     swapRpcEndpoint() {
-        this.currentRpcEndpoint = (this.currentRpcEndpoint + 1) % this.rpcEndpoints.length;
-        this.rpc = new JsonRpc(this.rpcEndpoints[this.currentRpcEndpoint], { fetch });
+        this.currentRpcEndpoint = (this.currentRpcEndpoint + 1) % this.config.rpcEndpoints.length;
+        this.rpc = new JsonRpc(this.config.rpcEndpoints[this.currentRpcEndpoint], { fetch });
         this.api = new Api({
             rpc: this.rpc,
-            signatureProvider: new JsSignatureProvider([this.privateKey]),
+            signatureProvider: new JsSignatureProvider([this.config.privateKey]),
             textDecoder: new TextDecoder(),
             textEncoder: new TextEncoder(),
         });
     }
 
     async eth_sendRawTransaction(params:any[]) {
+        let timeStarted = Date.now();
+        this.pushCount++;
+        logger.info(`Pushing tx #${this.pushCount} to ${this.config.rpcEndpoints[this.currentRpcEndpoint]}`);
+
         const rlptx:string = params[0].substr(2);
         const sentTransaction = await this.api.transact(
             {
@@ -38,35 +52,37 @@ export default class EosEvmMiner {
                         account: `eosio.evm`,
                         name: "pushtx",
                         authorization: [{
-                            actor : this.minerAccount,
+                            actor : this.config.minerAccount,
                             permission : "active",
                         }],
-                        data: { miner : this.minerAccount, rlptx }
+                        data: { miner : this.config.minerAccount, rlptx }
                     }
                 ],
             },
             {
                 blocksBehind: 3,
-                expireSeconds: 3000,
+                expireSeconds: this.config.expireSec || 60,
             }
         ).then(x => {
-            logger.info(`Pushed tx to ${this.rpcEndpoints[this.currentRpcEndpoint]}`);
+            logger.info(`Pushed tx to ${this.config.rpcEndpoints[this.currentRpcEndpoint]}`);
             logger.info(x);
             return true;
         }).catch(e => {
-            logger.error(`Error pushing tx to ${this.rpcEndpoints[this.currentRpcEndpoint]}`);
+            logger.error(`Error pushing #${this.pushCount} to ${this.config.rpcEndpoints[this.currentRpcEndpoint]}`);
             logger.error(e);
             this.swapRpcEndpoint();
 
             throw new Error("There was an error pushing this transaction from this EOS EVM miner.");
         });
 
+        logger.info(`Latency for #${this.pushCount}: ${Date.now() - timeStarted}ms`);
+
         return '0x'+keccak256(Buffer.from(rlptx, "hex"));
     }
 
     async eth_gasPrice(params:any[]){
         const timeSinceLastCall = Date.now() - this.lastGetTableCallTime;
-        if (!(this.lockGasPrice && this.gasPrice !== "0x1") && timeSinceLastCall >= 500 ) {
+        if (!(this.config.lockGasPrice && this.gasPrice !== "0x1") && timeSinceLastCall >= 1000 ) {
 
             try {
                 const result = await this.rpc.get_table_rows({

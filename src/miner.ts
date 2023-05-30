@@ -80,7 +80,7 @@ export default class EosEvmMiner {
 
         logger.info(`Latency for #${this.pushCount}: ${Date.now() - timeStarted}ms`);
 
-        return '0x'+keccak256(Buffer.from(rlptx, "hex"));
+        return '0x'+keccak256(Buffer.from(rlptx, "hex")).toString("hex");
     }
 
     async eth_gasPrice(params:any[]){

@@ -53,7 +53,7 @@ export default class EosEvmMiner {
                         name: "pushtx",
                         authorization: [{
                             actor : this.config.minerAccount,
-                            permission : "active",
+                            permission : this.config.minerPermission,
                         }],
                         data: { miner : this.config.minerAccount, rlptx }
                     }

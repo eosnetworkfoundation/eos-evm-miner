@@ -53,7 +53,7 @@ export default class EosEvmMiner {
                         name: "pushtx",
                         authorization: [{
                             actor : this.config.minerAccount,
-                            permission : "active",
+                            permission : this.config.minerPermission,
                         }],
                         data: { miner : this.config.minerAccount, rlptx }
                     }
@@ -80,7 +80,7 @@ export default class EosEvmMiner {
 
         logger.info(`Latency for #${this.pushCount}: ${Date.now() - timeStarted}ms`);
 
-        return '0x'+keccak256(Buffer.from(rlptx, "hex"));
+        return '0x'+keccak256(Buffer.from(rlptx, "hex")).toString("hex");
     }
 
     async eth_gasPrice(params:any[]){

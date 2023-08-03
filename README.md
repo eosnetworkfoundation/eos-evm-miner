@@ -34,7 +34,9 @@ cd eos-evm-miner
 
 ```bash
 yarn
-// or 
+```
+OR
+```bash
 npm install
 ```
 
@@ -48,11 +50,19 @@ This command will build and run the node.
 ```bash
 yarn mine
 ```
+OR
+```bash
+npm run mine
+```
 
 If you want to just run the node without building, you can run:
 
 ```bash
 yarn start
+```
+OR
+```bash
+npm run start
 ```
 
 

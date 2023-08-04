@@ -5,7 +5,7 @@ if [[ -n $(git status -s) ]]; then
     echo "Working directory is not empty, commit or stash changes before pushing."
     exit 1
 fi
-yarn check
+yarn install --check-files
 yarn format
 yarn lint --fix
 if [[ -n $(git status -s) ]]; then

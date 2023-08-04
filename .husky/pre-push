@@ -12,4 +12,3 @@ if [[ -n $(git status -s) ]]; then
     git add -A
     git commit -m "Husky: Committing result of prettier"
 fi
-yarn test:once

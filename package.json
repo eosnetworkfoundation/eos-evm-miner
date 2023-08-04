@@ -1,42 +1,44 @@
 {
-  "name": "@enf/eos-evm-miner",
-  "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "build": "tsc",
-    "start": "node ./dist/index.js",
-    "mine": "npm run build && npm start",
-    "dev": "ts-node-dev ./src/index.ts",
-    "test": "mocha --require ts-node/register --recursive ./test/**/*.ts",
-    "prepare": "husky install"
-  },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/node": "^18.16.2",
-    "@typescript-eslint/eslint-plugin": "^6.2.1",
-    "@typescript-eslint/parser": "^6.2.1",
-    "chai": "^4.3.7",
-    "eslint": "^8.46.0",
-    "eslint-config-prettier": "^8.10.0",
-    "eslint-plugin": "^1.0.1",
-    "eslint-plugin-es-x": "^7.2.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "husky": "^8.0.3",
-    "mocha": "^10.2.0",
-    "prettier": "3.0.1",
-    "ts-node": "^10.9.1",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.0.4"
-  },
-  "dependencies": {
-    "colors": "^1.4.0",
-    "dotenv": "^16.0.3",
-    "eosjs": "^22.1.0",
-    "ethereumjs-util": "^7.1.5",
-    "isomorphic-fetch": "^3.0.0",
-    "jayson": "^4.0.0",
-    "winston": "^3.8.2"
-  }
+    "name": "@enf/eos-evm-miner",
+    "version": "0.1.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "build": "tsc",
+        "start": "node ./dist/index.js",
+        "mine": "npm run build && npm start",
+        "dev": "ts-node-dev ./src/index.ts",
+        "test": "mocha --require ts-node/register --recursive ./test/**/*.ts",
+        "format": "prettier . --write .",
+        "lint": "prettier . --check . && eslint .",
+        "prepare": "husky install"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/node": "^18.16.2",
+        "@typescript-eslint/eslint-plugin": "^6.2.1",
+        "@typescript-eslint/parser": "^6.2.1",
+        "chai": "^4.3.7",
+        "eslint": "^8.46.0",
+        "eslint-config-prettier": "^8.10.0",
+        "eslint-plugin": "^1.0.1",
+        "eslint-plugin-es-x": "^7.2.0",
+        "eslint-plugin-prettier": "^5.0.0",
+        "husky": "^8.0.3",
+        "mocha": "^10.2.0",
+        "prettier": "^3.0.1",
+        "ts-node": "^10.9.1",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.0.4"
+    },
+    "dependencies": {
+        "colors": "^1.4.0",
+        "dotenv": "^16.0.3",
+        "eosjs": "^22.1.0",
+        "ethereumjs-util": "^7.1.5",
+        "isomorphic-fetch": "^3.0.0",
+        "jayson": "^4.0.0",
+        "winston": "^3.8.2"
+    }
 }

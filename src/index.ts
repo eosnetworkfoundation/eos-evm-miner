@@ -1,4 +1,4 @@
-require('dotenv').config();
+import 'dotenv/config'
 
 import colors from "colors/safe";
 import jayson from 'jayson';

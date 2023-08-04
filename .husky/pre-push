@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+set -x
 . "$(dirname -- "$0")/_/husky.sh"
 
 if [[ -n $(git status -s) ]]; then

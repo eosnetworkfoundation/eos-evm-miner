@@ -8,7 +8,8 @@
     "start": "node ./dist/index.js",
     "mine": "npm run build && npm start",
     "dev": "ts-node-dev ./src/index.ts",
-    "test": "mocha --require ts-node/register --recursive ./test/**/*.ts"
+    "test": "mocha --require ts-node/register --recursive ./test/**/*.ts",
+    "prepare": "husky install"
   },
   "author": "",
   "license": "ISC",
@@ -22,6 +23,7 @@
     "eslint-plugin": "^1.0.1",
     "eslint-plugin-es-x": "^7.2.0",
     "eslint-plugin-prettier": "^5.0.0",
+    "husky": "^8.0.3",
     "mocha": "^10.2.0",
     "prettier": "3.0.1",
     "ts-node": "^10.9.1",

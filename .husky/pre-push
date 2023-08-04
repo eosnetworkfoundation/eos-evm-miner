@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+if [[ -n $(git status -s) ]]; then
+    echo "Working directory is not empty, commit or stash changes before pushing."
+    exit 1
+fi
+yarn check
+yarn format
+yarn lint --fix
+if [[ -n $(git status -s) ]]; then
+    git add -A
+    git commit -m "Husky: Committing result of prettier"
+fi
+yarn test:once

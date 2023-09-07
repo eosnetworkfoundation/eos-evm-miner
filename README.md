@@ -19,7 +19,7 @@ For every transaction that you relay you will receive a reward in the form of EO
 > ⚠ **You must have registered your miner**
 >
 > You must have registered your miner account on the EOS Network. [Head over to our
-> docs](https://docs.eosnetwork.com/docs/latest/eos-evm/mining/basic-setup) to learn all about
+> docs](https://docs.eosnetwork.com/evm/miners-and-nodes/transaction-miner) to learn all about
 > mining, claiming your rewards, and more.
 
 

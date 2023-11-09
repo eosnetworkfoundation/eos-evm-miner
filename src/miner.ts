@@ -69,6 +69,7 @@ export default class EosEvmMiner {
 
             return true;
         }).catch(e => {
+            console.log('Error pushing trx:', e);
             logger.error(`Error pushing #${this.pushCount} to ${this.config.rpcEndpoints[this.currentRpcEndpoint]}`);
             logger.error(e);
 

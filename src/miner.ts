@@ -48,7 +48,7 @@ export default class EosEvmMiner {
                 });
                 this.gasPrice = "0x" + parseInt(result.rows[0].gas_price).toString(16);
                 logger.info("Gas price: " + this.gasPrice);
-                logger.info("setting RPC endpoint to ", this.config.rpcEndpoints[i]);
+                logger.info("setting RPC endpoint to " + this.config.rpcEndpoints[i]);
                 this.rpc = rpc;
                 this.api = api;
                 break;

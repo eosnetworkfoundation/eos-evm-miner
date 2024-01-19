@@ -18,21 +18,31 @@ export interface MinerConfig {
 export default class EosEvmMiner {
     rpc: JsonRpc;
     api: Api;
+    sigProvider: JsSignatureProvider;
+    publicKeys: string[];
     gasPrice: string = "0x22ecb25c00"; // 150Gwei
     pushCount: number = 0;
     poolTimer: NodeJS.Timeout;
 
     constructor(public readonly config: MinerConfig) {
+        this.publicKeys = [];
+        this.sigProvider = new JsSignatureProvider([this.config.privateKey]);
         this.poolTimer = setTimeout(() => this.refresh_endpoint_and_gasPrice(), 100);
     }
 
     async refresh_endpoint_and_gasPrice() {
         clearTimeout(this.poolTimer);
+        if (this.publicKeys.length == 0) {
+            this.publicKeys = await this.sigProvider.getAvailableKeys();
+            if (this.publicKeys.length > 0) {
+                console.log("miner's signing public key is " + this.publicKeys[0]);
+            }
+        }
         for (var i = 0; i < this.config.rpcEndpoints.length; ++i) {
             var rpc = new JsonRpc(this.config.rpcEndpoints[i], { fetch });
             var api = new Api({
                 rpc: rpc,
-                signatureProvider: new JsSignatureProvider([this.config.privateKey]),
+                signatureProvider: this.sigProvider,
                 textDecoder: new TextDecoder(),
                 textEncoder: new TextEncoder(),
             });
@@ -82,6 +92,7 @@ export default class EosEvmMiner {
                 ],
             },
             {
+                requiredKeys: this.publicKeys,
                 blocksBehind: 3,
                 expireSeconds: this.config.expireSec || 60,
             }
@@ -91,7 +102,7 @@ export default class EosEvmMiner {
 
             return true;
         }).catch(e => {
-            logger.error(`Error pushing #${trxcount}`);
+            logger.error(`Error pushing #${trxcount} #${evm_trx}`);
             logger.error(e);
 
             throw new Error(

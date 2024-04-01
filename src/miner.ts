@@ -1,9 +1,9 @@
-import { Api, JsonRpc, RpcError } from "eosjs";
-import { JsSignatureProvider } from "eosjs/dist/eosjs-jssig";
 import "isomorphic-fetch"
-import { TextEncoder, TextDecoder } from "util";
 import { keccak256 } from 'ethereumjs-util';
 import {logger} from "./logger";
+import {Session} from '@wharfkit/session'
+import {WalletPluginPrivateKey} from '@wharfkit/wallet-plugin-privatekey'
+import {APIClient, SignedTransaction } from "@wharfkit/antelope"
 
 
 export interface MinerConfig {
@@ -16,11 +16,11 @@ export interface MinerConfig {
 }
 
 export default class EosEvmMiner {
-    rpc: JsonRpc;
-    api: Api;
     gasPrice: string = "0x22ecb25c00"; // 150Gwei
     pushCount: number = 0;
     poolTimer: NodeJS.Timeout;
+    session: Session;
+    rpc: APIClient;
 
     constructor(public readonly config: MinerConfig) {
         this.poolTimer = setTimeout(() => this.refresh_endpoint_and_gasPrice(), 100);
@@ -29,15 +29,10 @@ export default class EosEvmMiner {
     async refresh_endpoint_and_gasPrice() {
         clearTimeout(this.poolTimer);
         for (var i = 0; i < this.config.rpcEndpoints.length; ++i) {
-            var rpc = new JsonRpc(this.config.rpcEndpoints[i], { fetch });
-            var api = new Api({
-                rpc: rpc,
-                signatureProvider: new JsSignatureProvider([this.config.privateKey]),
-                textDecoder: new TextDecoder(),
-                textEncoder: new TextEncoder(),
-            });
+            const rpc = new APIClient({url:this.config.rpcEndpoints[i]})
             try {
-                const result = await rpc.get_table_rows({
+                const info = await rpc.v1.chain.get_info()
+                const result = await rpc.v1.chain.get_table_rows({
                     json: true,
                     code: `eosio.evm`,
                     scope: `eosio.evm`,
@@ -50,7 +45,18 @@ export default class EosEvmMiner {
                 logger.info("Gas price: " + this.gasPrice);
                 logger.info("setting RPC endpoint to " + this.config.rpcEndpoints[i]);
                 this.rpc = rpc;
-                this.api = api;
+
+                const session = new Session({
+                    actor: this.config.minerAccount,
+                    permission: this.config.minerPermission,
+                    chain: {
+                        id: info.chain_id,
+                        url: this.config.rpcEndpoints[i]
+                    },
+                    walletPlugin: new WalletPluginPrivateKey(this.config.privateKey),
+                  })
+                this.session = session;
+
                 break;
             } catch(e) {
                 logger.error("Error getting gas price from " + this.config.rpcEndpoints[i] + ":" + e);
@@ -66,8 +72,7 @@ export default class EosEvmMiner {
 
         const evm_trx = '0x'+keccak256(Buffer.from(rlptx, "hex")).toString("hex");
         logger.info(`Pushing tx #${trxcount}, evm_trx ${evm_trx}`);
-
-        const sentTransaction = await this.api.transact(
+        const sentTransaction = await this.session.transact(
             {
                 actions: [
                     {
@@ -82,10 +87,19 @@ export default class EosEvmMiner {
                 ],
             },
             {
-                blocksBehind: 3,
                 expireSeconds: this.config.expireSec || 60,
+                broadcast: false
             }
-        ).then(x => {
+        ).then(async result => {
+            const signed = SignedTransaction.from({
+                ...result.resolved.transaction,
+                signatures: result.signatures,
+            })
+
+            result.response = await this.rpc.v1.chain.send_transaction2(signed)
+            return result
+        })
+        .then(x => {
             logger.info(`Pushed tx #${trxcount}`);
             logger.info(x);
 

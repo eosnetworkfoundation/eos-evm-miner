@@ -3,7 +3,7 @@ import { keccak256 } from 'ethereumjs-util';
 import {logger} from "./logger";
 import {Session} from '@wharfkit/session'
 import {WalletPluginPrivateKey} from '@wharfkit/wallet-plugin-privatekey'
-import {APIClient, SignedTransaction, Transaction } from "@wharfkit/antelope"
+import {APIClient, SignedTransaction, Transaction, ABI } from "@wharfkit/antelope"
 
 
 export interface MinerConfig {
@@ -21,12 +21,40 @@ export default class EosEvmMiner {
     poolTimer: NodeJS.Timeout;
     session: Session;
     rpc: APIClient;
+    abi: ABI
 
     constructor(public readonly config: MinerConfig) {
         this.poolTimer = setTimeout(() => this.refresh_endpoint_and_gasPrice(), 100);
     }
 
     async refresh_endpoint_and_gasPrice() {
+        if (!this.abi) {
+            this.abi = new ABI({
+                structs: [
+                    {
+                        "name": "pushtx",
+                        "base": "",
+                        "fields": [
+                            {
+                                "name": "miner",
+                                "type": "name"
+                            },
+                            {
+                                "name": "rlptx",
+                                "type": "bytes"
+                            }
+                        ]
+                    },
+                ],
+                actions: [
+                    {
+                        "name": "pushtx",
+                        "type": "pushtx",
+                        "ricardian_contract": ""
+                    },
+                ],
+              });
+        }
         clearTimeout(this.poolTimer);
         for (var i = 0; i < this.config.rpcEndpoints.length; ++i) {
             const rpc = new APIClient({url:this.config.rpcEndpoints[i]})
@@ -76,32 +104,6 @@ export default class EosEvmMiner {
         const info = await this.rpc.v1.chain.get_info()
         const header = info.getTransactionHeader()
 
-        const abi = {
-            structs: [
-                {
-                    "name": "pushtx",
-                    "base": "",
-                    "fields": [
-                        {
-                            "name": "miner",
-                            "type": "name"
-                        },
-                        {
-                            "name": "rlptx",
-                            "type": "bytes"
-                        }
-                    ]
-                },
-            ],
-            actions: [
-                {
-                    "name": "pushtx",
-                    "type": "pushtx",
-                    "ricardian_contract": ""
-                },
-            ],
-          }
-
         const transaction = Transaction.from({
         ...header,
             actions: [
@@ -115,7 +117,7 @@ export default class EosEvmMiner {
                     data: { miner : this.config.minerAccount, rlptx }
                 }
             ],
-        }, abi)
+        }, this.abi)
 
         this.session.signTransaction(transaction).then(signatures => {
             const signed = SignedTransaction.from({

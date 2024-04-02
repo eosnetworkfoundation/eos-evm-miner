@@ -1,9 +1,7 @@
 import "isomorphic-fetch"
 import { keccak256 } from 'ethereumjs-util';
 import {logger} from "./logger";
-import {Session} from '@wharfkit/session'
-import {WalletPluginPrivateKey} from '@wharfkit/wallet-plugin-privatekey'
-import {APIClient, SignedTransaction, Transaction, ABI } from "@wharfkit/antelope"
+import {APIClient, SignedTransaction, Transaction, ABI, PrivateKey } from "@wharfkit/antelope"
 
 
 export interface MinerConfig {
@@ -19,15 +17,20 @@ export default class EosEvmMiner {
     gasPrice: string = "0x22ecb25c00"; // 150Gwei
     pushCount: number = 0;
     poolTimer: NodeJS.Timeout;
-    session: Session;
     rpc: APIClient;
-    abi: ABI
+    abi: ABI;
+    key: PrivateKey;
 
     constructor(public readonly config: MinerConfig) {
         this.poolTimer = setTimeout(() => this.refresh_endpoint_and_gasPrice(), 100);
     }
 
     async refresh_endpoint_and_gasPrice() {
+        if (!this.key) {
+            this.key = PrivateKey.from(
+                this.config.privateKey
+              )
+        }
         if (!this.abi) {
             this.abi = new ABI({
                 structs: [
@@ -59,7 +62,6 @@ export default class EosEvmMiner {
         for (var i = 0; i < this.config.rpcEndpoints.length; ++i) {
             const rpc = new APIClient({url:this.config.rpcEndpoints[i]})
             try {
-                const info = await rpc.v1.chain.get_info()
                 const result = await rpc.v1.chain.get_table_rows({
                     json: true,
                     code: `eosio.evm`,
@@ -73,17 +75,6 @@ export default class EosEvmMiner {
                 logger.info("Gas price: " + this.gasPrice);
                 logger.info("setting RPC endpoint to " + this.config.rpcEndpoints[i]);
                 this.rpc = rpc;
-
-                const session = new Session({
-                    actor: this.config.minerAccount,
-                    permission: this.config.minerPermission,
-                    chain: {
-                        id: info.chain_id,
-                        url: this.config.rpcEndpoints[i]
-                    },
-                    walletPlugin: new WalletPluginPrivateKey(this.config.privateKey),
-                  })
-                this.session = session;
 
                 break;
             } catch(e) {
@@ -119,15 +110,14 @@ export default class EosEvmMiner {
             ],
         }, this.abi)
 
-        this.session.signTransaction(transaction).then(signatures => {
-            const signed = SignedTransaction.from({
-                ...transaction,
-                signatures: signatures,
-            })
-
-            return this.rpc.v1.chain.send_transaction2(signed)
+        const digest = transaction.signingDigest(info.chain_id)
+        
+        const signed = SignedTransaction.from({
+            ...transaction,
+            signatures: [this.key.signDigest(digest)],
         })
-        .then(x => {
+
+        this.rpc.v1.chain.send_transaction2(signed).then(x => {
             logger.info(`Pushed tx #${trxcount}`);
             logger.info(x);
 

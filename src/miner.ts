@@ -76,6 +76,32 @@ export default class EosEvmMiner {
         const info = await this.rpc.v1.chain.get_info()
         const header = info.getTransactionHeader()
 
+        const abi = {
+            structs: [
+                {
+                    "name": "pushtx",
+                    "base": "",
+                    "fields": [
+                        {
+                            "name": "miner",
+                            "type": "name"
+                        },
+                        {
+                            "name": "rlptx",
+                            "type": "bytes"
+                        }
+                    ]
+                },
+            ],
+            actions: [
+                {
+                    "name": "pushtx",
+                    "type": "pushtx",
+                    "ricardian_contract": ""
+                },
+            ],
+          }
+
         const transaction = Transaction.from({
         ...header,
             actions: [
@@ -89,7 +115,7 @@ export default class EosEvmMiner {
                     data: { miner : this.config.minerAccount, rlptx }
                 }
             ],
-        })
+        }, abi)
 
         this.session.signTransaction(transaction).then(signatures => {
             const signed = SignedTransaction.from({

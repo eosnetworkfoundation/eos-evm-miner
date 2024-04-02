@@ -3,7 +3,7 @@ import { keccak256 } from 'ethereumjs-util';
 import {logger} from "./logger";
 import {Session} from '@wharfkit/session'
 import {WalletPluginPrivateKey} from '@wharfkit/wallet-plugin-privatekey'
-import {APIClient, SignedTransaction } from "@wharfkit/antelope"
+import {APIClient, SignedTransaction, Transaction } from "@wharfkit/antelope"
 
 
 export interface MinerConfig {
@@ -72,32 +72,32 @@ export default class EosEvmMiner {
 
         const evm_trx = '0x'+keccak256(Buffer.from(rlptx, "hex")).toString("hex");
         logger.info(`Pushing tx #${trxcount}, evm_trx ${evm_trx}`);
-        const sentTransaction = await this.session.transact(
-            {
-                actions: [
-                    {
-                        account: `eosio.evm`,
-                        name: "pushtx",
-                        authorization: [{
-                            actor : this.config.minerAccount,
-                            permission : this.config.minerPermission,
-                        }],
-                        data: { miner : this.config.minerAccount, rlptx }
-                    }
-                ],
-            },
-            {
-                expireSeconds: this.config.expireSec || 60,
-                broadcast: false
-            }
-        ).then(async result => {
+
+        const info = await this.rpc.v1.chain.get_info()
+        const header = info.getTransactionHeader()
+
+        const transaction = Transaction.from({
+        ...header,
+            actions: [
+                {
+                    account: `eosio.evm`,
+                    name: "pushtx",
+                    authorization: [{
+                        actor : this.config.minerAccount,
+                        permission : this.config.minerPermission,
+                    }],
+                    data: { miner : this.config.minerAccount, rlptx }
+                }
+            ],
+        })
+
+        this.session.signTransaction(transaction).then(signatures => {
             const signed = SignedTransaction.from({
-                ...result.resolved.transaction,
-                signatures: result.signatures,
+                ...transaction,
+                signatures: signatures,
             })
 
-            result.response = await this.rpc.v1.chain.send_transaction2(signed)
-            return result
+            return this.rpc.v1.chain.send_transaction2(signed)
         })
         .then(x => {
             logger.info(`Pushed tx #${trxcount}`);

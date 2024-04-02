@@ -138,7 +138,7 @@ export default class EosEvmMiner {
 
             throw new Error(
                 `error pushing #${trxcount} evm_trx ${evm_trx} from EVM miner: `
-                + e.hasOwnProperty("details") ? e.details[0].message : e.hasOwnProperty("json") ? e.json.error.details[0].message : JSON.stringify(e)
+                + e.hasOwnProperty("details") ? e.details[0].message : JSON.stringify(e)
             );
         });
 

@@ -97,7 +97,11 @@ export default class EosEvmMiner {
                 signatures: result.signatures,
             })
 
-            result.response = await this.rpc.v1.chain.send_transaction2(signed)
+            result.response = await this.rpc.v1.chain.send_transaction2(signed, {
+                return_failure_trace: false,
+                retry_trx: false,
+                retry_trx_num_blocks: 1
+            })
             return result
         })
             .then(x => {

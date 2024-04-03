@@ -3,7 +3,7 @@ import { keccak256 } from 'ethereumjs-util';
 import {logger} from "./logger";
 import {Session} from '@wharfkit/session'
 import {WalletPluginPrivateKey} from '@wharfkit/wallet-plugin-privatekey'
-import {APIClient, SignedTransaction, Transaction, ABI } from "@wharfkit/antelope"
+import {APIClient, SignedTransaction, Transaction, ABI, TransactionHeader } from "@wharfkit/antelope"
 
 
 export interface MinerConfig {
@@ -21,7 +21,8 @@ export default class EosEvmMiner {
     poolTimer: NodeJS.Timeout;
     session: Session;
     rpc: APIClient;
-    abi: ABI
+    abi: ABI;
+    header: TransactionHeader;
 
     constructor(public readonly config: MinerConfig) {
         this.poolTimer = setTimeout(() => this.refresh_endpoint_and_gasPrice(), 100);
@@ -59,7 +60,9 @@ export default class EosEvmMiner {
         for (var i = 0; i < this.config.rpcEndpoints.length; ++i) {
             const rpc = new APIClient({url:this.config.rpcEndpoints[i]})
             try {
-                const info = await rpc.v1.chain.get_info()
+                const info = await rpc.v1.chain.get_info();
+                this.header = info.getTransactionHeader();
+                
                 const result = await rpc.v1.chain.get_table_rows({
                     json: true,
                     code: `eosio.evm`,
@@ -88,6 +91,8 @@ export default class EosEvmMiner {
                 break;
             } catch(e) {
                 logger.error("Error getting gas price from " + this.config.rpcEndpoints[i] + ":" + e);
+                // Clear header cache if refresh failed
+                this.header = null;
             }
         }
         this.poolTimer = setTimeout(() => this.refresh_endpoint_and_gasPrice(), 5000);
@@ -101,11 +106,13 @@ export default class EosEvmMiner {
         const evm_trx = '0x'+keccak256(Buffer.from(rlptx, "hex")).toString("hex");
         logger.info(`Pushing tx #${trxcount}, evm_trx ${evm_trx}`);
 
-        const info = await this.rpc.v1.chain.get_info()
-        const header = info.getTransactionHeader()
+        if (!this.header) {
+            const info = await this.rpc.v1.chain.get_info();
+            this.header = info.getTransactionHeader();
+        }
 
         const transaction = Transaction.from({
-        ...header,
+        ...this.header,
             actions: [
                 {
                     account: `eosio.evm`,

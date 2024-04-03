@@ -28,6 +28,7 @@ export default class EosEvmMiner {
 
     async refresh_endpoint_and_gasPrice() {
         clearTimeout(this.poolTimer);
+
         for (var i = 0; i < this.config.rpcEndpoints.length; ++i) {
             const rpc = new APIClient({url:this.config.rpcEndpoints[i]})
             try {
@@ -105,12 +106,12 @@ export default class EosEvmMiner {
 
             return true;
         }).catch(e => {
-            logger.error(`Error pushing #${trxcount}`);
+            logger.error(`Error pushing #${trxcount} #${evm_trx}`);
             logger.error(e);
 
             throw new Error(
                 `error pushing #${trxcount} evm_trx ${evm_trx} from EVM miner: `
-                + e.hasOwnProperty("details") ? e.details[0].message : e.hasOwnProperty("json") ? e.json.error.details[0].message : JSON.stringify(e)
+                + e.hasOwnProperty("details") ? e.details[0].message : JSON.stringify(e)
             );
         });
 

@@ -21,9 +21,11 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "@wharfkit/antelope": "^1.0.7",
+    "@wharfkit/session": "^1.2.8",
+    "@wharfkit/wallet-plugin-privatekey": "^1.1.0",
     "colors": "^1.4.0",
     "dotenv": "^16.0.3",
-    "eosjs": "^22.1.0",
     "ethereumjs-util": "^7.1.5",
     "isomorphic-fetch": "^3.0.0",
     "jayson": "^4.0.0",

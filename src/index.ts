@@ -50,6 +50,16 @@ const server = new jayson.Server({
                 "message": error.message
             });
         });
+    },
+    eth_maxPriorityFeePerGas: function(params, callback) {
+        eosEvmMiner.eth_maxPriorityFeePerGas(params).then((result:any) => {
+            callback(null, result);
+        }).catch((error:Error) => {
+            callback({
+                "code": -32000,
+                "message": error.message
+            });
+        });
     }
 });
 

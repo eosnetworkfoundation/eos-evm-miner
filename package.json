@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@wharfkit/antelope": "^1.0.7",
+    "@wharfkit/resources": "^1.2.2",
     "@wharfkit/session": "^1.2.8",
     "@wharfkit/wallet-plugin-privatekey": "^1.1.0",
     "colors": "^1.4.0",

@@ -124,7 +124,8 @@ export default class EosEvmMiner {
                 logger.info("setting RPC endpoint to " + this.config.rpcEndpoints[i]);
 
                 this.resources = new Resources({
-                    api: this.rpc
+                    api: this.rpc,
+                    sampleAccount: this.config.minerAccount,
                 })
 
                 const session = new Session({

@@ -29,7 +29,7 @@ export default class EosEvmMiner {
     cpuCostPerUs: number = 314000000000; // ~314 Gwei, average EOS cost per us in a base utilization of 10% and miner utilization of 3%
     priorityFee: number = 0;
     enforcedPriorityFee: number = 0;
-    priorityFeeQueue: Array<[number, number]>; 
+    priorityFeeQueue: Array<[number, number]> = []; 
 
     constructor(public readonly config: MinerConfig) {
         this.poolTimer = setTimeout(() => this.refresh(), 100);

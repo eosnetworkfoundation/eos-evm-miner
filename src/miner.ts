@@ -79,7 +79,7 @@ export default class EosEvmMiner {
     async calcCpuPrice() {
         const powerup = await this.resources.v1.powerup.get_state()
         const sample = await this.resources.getSampledUsage()
-        this.cpuCostPerUs = powerup.cpu.price_per_us(sample, 1000) * 1000000000000000 // get 1ms price multiplied by 1e15
+        this.cpuCostPerUs = powerup.cpu.price_per_ms(sample, 100000) * 10000000000 // get 1s price multiplied by 1e10
         logger.info("cpu price per us:" + this.cpuCostPerUs);
     }
 
@@ -125,7 +125,7 @@ export default class EosEvmMiner {
 
                 this.resources = new Resources({
                     api: this.rpc,
-                    sampleAccount: this.config.minerAccount,
+                    sampleAccount: "eosio.reserv",
                 })
 
                 const session = new Session({

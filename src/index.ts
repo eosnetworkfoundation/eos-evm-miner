@@ -5,7 +5,8 @@ import jayson from 'jayson';
 import EosEvmMiner from './miner';
 import {logger} from "./logger";
 
-const { PRIVATE_KEY, MINER_ACCOUNT, RPC_ENDPOINTS, PORT = 50305, LOCK_GAS_PRICE = "true", MINER_PERMISSION = "active", EXPIRE_SEC = 60 } = process.env;
+const { PRIVATE_KEY, MINER_ACCOUNT, RPC_ENDPOINTS, PORT = 50305, LOCK_GAS_PRICE = "true", MINER_PERMISSION = "active", EXPIRE_SEC = 60,
+ MINER_FEE_MODE, MINER_FEE_PARAMETER } = process.env;
 
 const quit = (error:string) => {
     logger.error(error);
@@ -20,6 +21,10 @@ const rpcEndpoints:Array<string> = RPC_ENDPOINTS.split('|');
 if(!rpcEndpoints.length) quit('Not enough RPC_ENDPOINTS');
 
 let lockGasPrice:boolean = LOCK_GAS_PRICE === "true";
+let minerFeeParameter:number = undefined;
+if (MINER_FEE_PARAMETER) {
+    minerFeeParameter = parseFloat(MINER_FEE_PARAMETER)
+}
 
 const eosEvmMiner = new EosEvmMiner({
     privateKey: PRIVATE_KEY,
@@ -27,7 +32,9 @@ const eosEvmMiner = new EosEvmMiner({
     minerPermission: MINER_PERMISSION,
     rpcEndpoints,
     lockGasPrice,
-    expireSec: +EXPIRE_SEC
+    expireSec: +EXPIRE_SEC,
+    minerFeeMode: MINER_FEE_MODE,
+    minerFeeParameter: minerFeeParameter,
 });
 
 const server = new jayson.Server({

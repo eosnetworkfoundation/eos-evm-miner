@@ -13,6 +13,8 @@ export interface MinerConfig {
     rpcEndpoints?: Array<string>;
     lockGasPrice?: boolean;
     expireSec?: number;
+    minerFeeMode?: string;
+    minerFeeParameter?: number;
 }
 
 export default class EosEvmMiner {
@@ -76,6 +78,18 @@ export default class EosEvmMiner {
         return this.evmVersion > 0;
     }
 
+    getEnforcedPriorityFee() {
+        // We will only enforce the lowest price in the queue. 
+        // In this way, no matter the user specify the current or earlier value, the tx will go through.
+        return Math.min(...this.priorityFeeQueue.map(x=>x[1]));
+    }
+
+    getSafeGasPrice() {
+        // Return a price that is safe for a while.
+        // The max of the queued price can make sure no matter when the tx is processed before or after the price change, the value is enough.
+        return Math.max(this.gasPrice, this.maxQueuedPrice);
+    }
+
     async calcCpuPrice() {
         const powerup = await this.resources.v1.powerup.get_state()
         const sample = await this.resources.getSampledUsage()
@@ -83,18 +97,9 @@ export default class EosEvmMiner {
         logger.info("cpu price per us:" + this.cpuCostPerUs);
     }
 
-    async calcPriorityFee() {
+    savePriorityFee(newPriorityFee) {
         const lastPriorityFee = this.priorityFee;
-        if (this.check1559Enabled()) {
-            const gas_per_us = 74; // ~74.12 estimated from our benchmarks without OC
-            // The default value should be around 4.24 Gwei.
-            this.priorityFee = Math.ceil(this.cpuCostPerUs/gas_per_us);
-        }
-        else {
-            this.priorityFee = 0;
-        }
-
-        logger.info("New priority fee:" + this.priorityFee);
+        this.priorityFee = newPriorityFee;
 
         // Only save prices in 60s.
         const newQueue = this.priorityFeeQueue.filter(x=>x[0] > Date.now() - 60*1000);
@@ -103,13 +108,63 @@ export default class EosEvmMiner {
             newQueue.push([Date.now() - 1, lastPriorityFee])
         }
         newQueue.push([Date.now(), this.priorityFee]);
-    
+
         this.priorityFeeQueue = newQueue;
+    }
 
-        // We enforce the minimum fee in the queue so that the user can make calls with recently queried fee.
-        this.enforcedPriorityFee = Math.min(...this.priorityFeeQueue.map(x=>x[1]));
+    priorityFeeFromCPU() {
+        // Default to ~74.12 estimated from our benchmarks without OC
+        let gas_per_us = this.config.minerFeeParameter? this.config.minerFeeParameter : 74;
+        if (gas_per_us == 0) {
+            gas_per_us = 1;
+        }
+        const fee = this.cpuCostPerUs/gas_per_us;
+        return Math.ceil(fee);
+    }
 
-        logger.info("Priority enforced:" + this.priorityFee);
+    priorityFeeFromProportion() {
+        const proportion = this.config.minerFeeParameter? this.config.minerFeeParameter : 0;
+        const fee = this.gasPrice * proportion;
+        return Math.ceil(fee);
+    }
+
+    priorityFeeFromFixedValue() {
+        const fee = this.config.minerFeeParameter? this.config.minerFeeParameter : 0;
+        return Math.ceil(fee);
+    }
+
+    async calcPriorityFee() {
+        // Calculate new priority fee based on config. 
+        // Default fee to 0 if config not set properly.
+        let newPriorityFee = 0;
+        if (this.check1559Enabled()) {
+            if (this.config.minerFeeMode) {
+                switch (this.config.minerFeeMode.toLowerCase()) {
+                    case "cpu": {
+                        newPriorityFee = this.priorityFeeFromCPU();
+                        break;
+                    }
+                    case "proportion": {
+                        newPriorityFee = this.priorityFeeFromProportion();
+                        break;
+                    }
+                    case "fixed": {
+                        newPriorityFee = this.priorityFeeFromFixedValue();
+                        break;
+                    }
+                    default : {
+                        logger.error("Unknown miner fee mode: " + this.config.minerFeeMode);
+                    }
+                } 
+            }
+        }
+
+
+        logger.info("New priority fee:" + newPriorityFee);
+        this.savePriorityFee(newPriorityFee);   
+
+        this.enforcedPriorityFee = this.getEnforcedPriorityFee();
+        logger.info("Priority enforced:" + this.enforcedPriorityFee);
     }   
 
     async refresh() {
@@ -232,11 +287,13 @@ export default class EosEvmMiner {
     }
 
     async eth_gasPrice(params: any[]) {
-        const max_price = Math.max(this.gasPrice, this.maxQueuedPrice);
-        return "0x" + max_price.toString(16);
+        // Reference price = a price that will be safe for a while + current priority fee
+        const price = this.getSafeGasPrice() + this.priorityFee
+        return "0x" + price.toString(16);
     }
 
     async eth_maxPriorityFeePerGas(params: any[]) {
+        // Reference priority fee = current fee
         return "0x" + this.priorityFee.toString(16);
     }
 }

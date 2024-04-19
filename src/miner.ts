@@ -236,7 +236,7 @@ export default class EosEvmMiner {
                         actor: this.config.minerAccount,
                         permission: this.config.minerPermission,
                     }],
-                    data: { miner: this.config.minerAccount, rlptx }
+                    data: { miner: this.config.minerAccount, rlptx, min_inclusion_price:this.enforcedPriorityFee }
                 }
             ],
         }

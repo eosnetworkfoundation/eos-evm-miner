@@ -20,10 +20,10 @@ export interface MinerConfig {
 }
 
 export default class EosEvmMiner {
-    gasPrice: number = parseInt("22ecb25c00",16); // 150Gwei
-    maxQueuedPrice: number = parseInt("22ecb25c00",16); // 150Gwei
+    gasPrice: number = parseInt("22ecb25c00", 16); // 150Gwei
+    maxQueuedPrice: number = parseInt("22ecb25c00", 16); // 150Gwei
     evmVersion: number = 0;
-    
+
     pushCount: number = 0;
     poolTimer: NodeJS.Timeout;
     session: Session;
@@ -33,11 +33,11 @@ export default class EosEvmMiner {
     cpuCostPerUs: number = 314000000000; // ~314 Gwei, average EOS cost per us in a base utilization of 10% and miner utilization of 3%
     priorityFee: number = 0;
     enforcedPriorityFee: number = 0;
-    priorityFeeQueue: Array<[number, number]> = []; 
+    priorityFeeQueue: Array<[number, number]> = [];
 
-    priorityFeeMethod: ()=>number = undefined;
+    priorityFeeMethod: () => number = undefined;
 
-    constructor (public readonly config: MinerConfig) {
+    constructor(public readonly config: MinerConfig) {
         this.poolTimer = setTimeout(() => this.refresh(), 100);
 
         if (this.config.minerFeeMode) {
@@ -54,11 +54,11 @@ export default class EosEvmMiner {
                     this.priorityFeeMethod = this.priorityFeeFromFixedValue.bind(this);
                     break;
                 }
-                default : {
+                default: {
                     logger.error("Unknown miner fee mode: " + this.config.minerFeeMode);
                 }
-            } 
-        }   
+            }
+        }
     }
 
     check1559Enabled() {
@@ -68,7 +68,7 @@ export default class EosEvmMiner {
     getEnforcedPriorityFee() {
         // We will only enforce the lowest price in the queue. 
         // In this way, no matter the user specify the current or earlier value, the tx will go through.
-        return Math.min(...this.priorityFeeQueue.map(x=>x[1]));
+        return Math.min(...this.priorityFeeQueue.map(x => x[1]));
     }
 
     getSafeGasPrice() {
@@ -79,22 +79,22 @@ export default class EosEvmMiner {
 
     priorityFeeFromCPU() {
         // Default to ~74.12 estimated from our benchmarks without OC
-        let gas_per_us = this.config.minerFeeParameter? this.config.minerFeeParameter : 74;
+        let gas_per_us = this.config.minerFeeParameter ? this.config.minerFeeParameter : 74;
         if (gas_per_us == 0) {
             gas_per_us = 1;
         }
-        const fee = this.cpuCostPerUs/gas_per_us;
+        const fee = this.cpuCostPerUs / gas_per_us;
         return Math.ceil(fee);
     }
 
     priorityFeeFromProportion() {
-        const proportion = this.config.minerFeeParameter? this.config.minerFeeParameter : 0;
+        const proportion = this.config.minerFeeParameter ? this.config.minerFeeParameter : 0;
         const fee = this.gasPrice * proportion;
         return Math.ceil(fee);
     }
 
     priorityFeeFromFixedValue() {
-        const fee = this.config.minerFeeParameter? this.config.minerFeeParameter : 0;
+        const fee = this.config.minerFeeParameter ? this.config.minerFeeParameter : 0;
         return Math.ceil(fee);
     }
 
@@ -103,7 +103,7 @@ export default class EosEvmMiner {
         this.priorityFee = newPriorityFee;
 
         // Only save prices in 60s.
-        const newQueue = this.priorityFeeQueue.filter(x=>x[0] > Date.now() - 60*1000);
+        const newQueue = this.priorityFeeQueue.filter(x => x[0] > Date.now() - 60 * 1000);
         // Always leave at least one old value to avoid sudden changes.
         if (newQueue.length == 0) {
             newQueue.push([Date.now() - 1, lastPriorityFee])
@@ -121,12 +121,12 @@ export default class EosEvmMiner {
             newPriorityFee = this.priorityFeeMethod();
         }
 
-        logger.info("New priority fee:" + newPriorityFee);
-        this.savePriorityFee(newPriorityFee);   
+        logger.info("New priority fee: " + newPriorityFee);
+        this.savePriorityFee(newPriorityFee);
 
         this.enforcedPriorityFee = this.getEnforcedPriorityFee();
-        logger.info("Priority enforced:" + this.enforcedPriorityFee);
-    } 
+        logger.info("Priority enforced: " + this.enforcedPriorityFee);
+    }
 
     async queryContractStates() {
         try {
@@ -152,7 +152,7 @@ export default class EosEvmMiner {
             }
 
             if (result.rows[0].base_price_queue) {
-                const price_queue = result.rows[0].base_price_queue.map(x=>parseInt(x));
+                const price_queue = result.rows[0].base_price_queue.map(x => parseInt(x));
                 this.maxQueuedPrice = Math.max(price_queue);
             }
             else {
@@ -161,7 +161,7 @@ export default class EosEvmMiner {
             logger.info("Max queued price: " + this.maxQueuedPrice);
         } catch (e) {
             // Keep using old values if failed to get new ones.
-            logger.error("Error getting contract states:" + e);
+            logger.error("Error getting contract states: " + e);
         }
     }
 
@@ -172,10 +172,10 @@ export default class EosEvmMiner {
             const powerup = await this.resources.v1.powerup.get_state()
             const sample = await this.resources.getSampledUsage()
             this.cpuCostPerUs = powerup.cpu.price_per_ms(sample, 100000) * 10000000000 // get 1s price multiplied by 1e10
-            logger.info("cpu price per us:" + this.cpuCostPerUs);
+            logger.info("cpu price per us: " + this.cpuCostPerUs);
         } catch (e) {
             // Keep using old values if failed to get new ones.
-            logger.error("Error getting CPU price:" + e);
+            logger.error("Error getting CPU price: " + e);
         }
     }
 
@@ -186,7 +186,7 @@ export default class EosEvmMiner {
             const rpc = new APIClient({ url: this.config.rpcEndpoints[i] })
             try {
                 const info = await rpc.v1.chain.get_info();
-                
+
                 this.rpc = rpc;
                 logger.info("setting RPC endpoint to " + this.config.rpcEndpoints[i]);
 
@@ -205,24 +205,24 @@ export default class EosEvmMiner {
                     walletPlugin: new WalletPluginPrivateKey(this.config.privateKey),
                 })
                 this.session = session;
-                
+
                 // Call without await so that those calls will not block.
                 // Currently, the protocol is desined in a way that it can handle calls prepared with older parameters.
                 // So it's fine that we make some calls during the process of updatiing those settings.
                 this.queryCpuPrice();
                 this.queryContractStates();
-                
+
                 // Refresh price
                 this.calcPriorityFee();
                 break;
             } catch (e) {
-                logger.error("Error getting info from " + this.config.rpcEndpoints[i] + ":" + e);
+                logger.error("Error getting info from " + this.config.rpcEndpoints[i] + ": " + e);
             }
         }
         this.poolTimer = setTimeout(() => this.refresh(), 5000);
     }
 
-    preparePushtx(rlptx: string) {  
+    preparePushtx(rlptx: string) {
         return {
             actions: [
                 {
@@ -232,10 +232,10 @@ export default class EosEvmMiner {
                         actor: this.config.minerAccount,
                         permission: this.config.minerPermission,
                     }],
-                    data: { 
-                        miner: this.config.minerAccount, 
-                        rlptx, 
-                        ...this.check1559Enabled() && { min_inclusion_price:this.enforcedPriorityFee } 
+                    data: {
+                        miner: this.config.minerAccount,
+                        rlptx,
+                        ...this.check1559Enabled() && { min_inclusion_price: this.enforcedPriorityFee }
                     }
                 }
             ],

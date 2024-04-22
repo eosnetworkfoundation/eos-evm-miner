@@ -5,8 +5,19 @@ import jayson from 'jayson';
 import EosEvmMiner from './miner';
 import {logger} from "./logger";
 
-const { PRIVATE_KEY, MINER_ACCOUNT, RPC_ENDPOINTS, PORT = 50305, LOCK_GAS_PRICE = "true", MINER_PERMISSION = "active", EXPIRE_SEC = 60,
- MINER_FEE_MODE, MINER_FEE_PARAMETER } = process.env;
+const { 
+    PRIVATE_KEY, 
+    MINER_ACCOUNT, 
+    RPC_ENDPOINTS, 
+    PORT = 50305, 
+    LOCK_GAS_PRICE = "true",
+    EVM_ACCOUNT = "eosio.evm",
+    EVM_SCOPE = "eosio.evm",
+    MINER_PERMISSION = "active",
+    EXPIRE_SEC = 60,
+    MINER_FEE_MODE, 
+    MINER_FEE_PARAMETER
+} = process.env;
 
 const quit = (error:string) => {
     logger.error(error);
@@ -35,6 +46,8 @@ const eosEvmMiner = new EosEvmMiner({
     expireSec: +EXPIRE_SEC,
     minerFeeMode: MINER_FEE_MODE,
     minerFeeParameter: minerFeeParameter,
+    evmAccount: EVM_ACCOUNT,
+    evmScope: EVM_SCOPE,
 });
 
 const server = new jayson.Server({

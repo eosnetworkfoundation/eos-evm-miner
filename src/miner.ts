@@ -38,8 +38,6 @@ export default class EosEvmMiner {
     priorityFeeMethod: () => number = undefined;
 
     constructor(public readonly config: MinerConfig) {
-        this.poolTimer = setTimeout(() => this.refresh(), 100);
-
         if (this.config.minerFeeMode) {
             switch (this.config.minerFeeMode.toLowerCase()) {
                 case "cpu": {
@@ -59,6 +57,8 @@ export default class EosEvmMiner {
                 }
             }
         }
+
+        this.poolTimer = setTimeout(() => this.refresh(), 100);
     }
 
     check1559Enabled() {

@@ -151,9 +151,19 @@ export default class EosEvmMiner {
                 logger.info("EVM version defaulted to: " + this.evmVersion);
             }
 
-            if (result.rows[0].base_price_queue) {
-                const price_queue = result.rows[0].base_price_queue.map(x => parseInt(x));
-                this.maxQueuedPrice = Math.max(price_queue);
+            const priceQueueResult = await this.rpc.v1.chain.get_table_rows({
+                json: true,
+                code: this.config.evmAccount,
+                scope: this.config.evmScope,
+                table: 'pricequeue',
+                limit: 10,
+                reverse: false,
+                show_payer: false
+            });
+
+            if (result.rows.length > 0) {
+                const price_queue = result.rows.map(x => parseInt(x));
+                this.maxQueuedPrice = Math.max(...price_queue);
             }
             else {
                 this.maxQueuedPrice = 0;

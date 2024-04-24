@@ -11,7 +11,6 @@ export interface MinerConfig {
     minerAccount: string;
     minerPermission: string;
     rpcEndpoints: Array<string>;
-    lockGasPrice: boolean;
     expireSec: number;
     minerFeeMode?: string;
     minerFeeParameter?: number;

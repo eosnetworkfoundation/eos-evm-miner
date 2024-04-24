@@ -32,7 +32,6 @@ if(!RPC_ENDPOINTS) quit('Missing RPC_ENDPOINTS');
 const rpcEndpoints:Array<string> = RPC_ENDPOINTS.split('|');
 if(!rpcEndpoints.length) quit('Not enough RPC_ENDPOINTS');
 
-let lockGasPrice:boolean = LOCK_GAS_PRICE === "true";
 let retryTx:boolean = RETRY_TX === "true";
 let minerFeeParameter:number = undefined;
 if (MINER_FEE_PARAMETER) {
@@ -44,7 +43,6 @@ const eosEvmMiner = new EosEvmMiner({
     minerAccount: MINER_ACCOUNT,
     minerPermission: MINER_PERMISSION,
     rpcEndpoints,
-    lockGasPrice,
     expireSec: +EXPIRE_SEC,
     minerFeeMode: MINER_FEE_MODE,
     minerFeeParameter: minerFeeParameter,

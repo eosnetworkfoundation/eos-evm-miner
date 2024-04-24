@@ -16,7 +16,8 @@ const {
     MINER_PERMISSION = "active",
     EXPIRE_SEC = 60,
     MINER_FEE_MODE, 
-    MINER_FEE_PARAMETER
+    MINER_FEE_PARAMETER,
+    RETRY_TX = "true",
 } = process.env;
 
 const quit = (error:string) => {
@@ -32,6 +33,7 @@ const rpcEndpoints:Array<string> = RPC_ENDPOINTS.split('|');
 if(!rpcEndpoints.length) quit('Not enough RPC_ENDPOINTS');
 
 let lockGasPrice:boolean = LOCK_GAS_PRICE === "true";
+let retryTx:boolean = RETRY_TX === "true";
 let minerFeeParameter:number = undefined;
 if (MINER_FEE_PARAMETER) {
     minerFeeParameter = parseFloat(MINER_FEE_PARAMETER)
@@ -48,6 +50,7 @@ const eosEvmMiner = new EosEvmMiner({
     minerFeeParameter: minerFeeParameter,
     evmAccount: EVM_ACCOUNT,
     evmScope: EVM_SCOPE,
+    retryTx: retryTx,
 });
 
 const server = new jayson.Server({

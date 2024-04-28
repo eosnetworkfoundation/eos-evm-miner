@@ -21,7 +21,7 @@ export interface MinerConfig {
 
 export default class EosEvmMiner {
     gasPrice: number = parseInt("22ecb25c00", 16); // 150Gwei
-    maxQueuedPrice: number = parseInt("22ecb25c00", 16); // 150Gwei
+    maxQueuedPrice: number = 0;
     evmVersion: number = 0;
 
     pushCount: number = 0;
@@ -151,24 +151,27 @@ export default class EosEvmMiner {
                 logger.info("EVM version defaulted to: " + this.evmVersion);
             }
 
-            const priceQueueResult = await this.rpc.v1.chain.get_table_rows({
-                json: true,
-                code: this.config.evmAccount,
-                scope: this.config.evmScope,
-                table: 'pricequeue',
-                limit: 10,
-                reverse: false,
-                show_payer: false
-            });
+            // TODO: Maybe give name to it? 
+            if (this.evmVersion >= 1) {
+                const priceQueueResult = await this.rpc.v1.chain.get_table_rows({
+                    json: true,
+                    code: this.config.evmAccount,
+                    scope: this.config.evmScope,
+                    table: 'pricequeue',
+                    limit: 10,
+                    reverse: false,
+                    show_payer: false
+                });
 
-            if (result.rows.length > 0) {
-                const price_queue = result.rows.map(x => parseInt(x));
-                this.maxQueuedPrice = Math.max(...price_queue);
+                if (result.rows.length > 0) {
+                    const price_queue = result.rows.map(x => parseInt(x));
+                    this.maxQueuedPrice = Math.max(...price_queue);
+                }
+                else {
+                    this.maxQueuedPrice = 0;
+                }
+                logger.info("Max queued price: " + this.maxQueuedPrice);
             }
-            else {
-                this.maxQueuedPrice = 0;
-            }
-            logger.info("Max queued price: " + this.maxQueuedPrice);
         } catch (e) {
             // Keep using old values if failed to get new ones.
             logger.error("Error getting contract states: " + e);

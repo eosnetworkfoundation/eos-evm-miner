@@ -151,26 +151,21 @@ export default class EosEvmMiner {
                 logger.info("EVM version defaulted to: " + this.evmVersion);
             }
 
-            // TODO: Maybe give name to it? 
+            // The queue can only hold changes in the next 3 minutes. So it can have at most 180 rows if working properly.
+            // We set the 180 limit there as well just in case.
             if (this.evmVersion >= 1) {
                 const priceQueueResult = await this.rpc.v1.chain.get_table_rows({
                     json: true,
                     code: this.config.evmAccount,
                     scope: this.config.evmScope,
                     table: 'pricequeue',
-                    limit: this.config.expireSec,
+                    limit: 180, 
                     reverse: false,
                     show_payer: false
                 });
 
-                // We use the expireSec to limit the rows. 
-                // Since we will have at most one row per second in the table, the limit will make sure we always cover every 
-                // coming changes before expire.
                 if (result.rows.length > 0) {
-                    // Miner is not aware of current block number, so we filter the list by the block in the first entry + expireSec
-                    const threshold = result.rows[0].block + this.config.expireSec;
-
-                    const price_queue = result.rows.filter(x=>x.block < threshold).map(x => parseInt(x.price));
+                    const price_queue = result.rows.map(x => parseInt(x.price));
                     this.maxQueuedPrice = Math.max(...price_queue);
                 }
                 else {

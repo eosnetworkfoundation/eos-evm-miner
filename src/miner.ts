@@ -158,13 +158,19 @@ export default class EosEvmMiner {
                     code: this.config.evmAccount,
                     scope: this.config.evmScope,
                     table: 'pricequeue',
-                    limit: 10,
+                    limit: this.config.expireSec,
                     reverse: false,
                     show_payer: false
                 });
 
+                // We use the expireSec to limit the rows. 
+                // Since we will have at most one row per second in the table, the limit will make sure we always cover every 
+                // coming changes before expire.
                 if (result.rows.length > 0) {
-                    const price_queue = result.rows.map(x => parseInt(x));
+                    // Miner is not aware of current block number, so we filter the list by the block in the first entry + expireSec
+                    const threshold = result.rows[0].block + this.config.expireSec;
+
+                    const price_queue = result.rows.filter(x=>x.block < threshold).map(x => parseInt(x.price));
                     this.maxQueuedPrice = Math.max(...price_queue);
                 }
                 else {

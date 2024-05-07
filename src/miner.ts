@@ -12,8 +12,10 @@ export interface MinerConfig {
     minerPermission: string;
     rpcEndpoints: Array<string>;
     expireSec: number;
-    minerFeeMode?: string;
-    minerFeeParameter?: number;
+    minerFeeMode: string;
+    fixedMinerFee: number;
+    gasPerCpu: number;
+    minerMarkupPercentage: number;
     evmAccount: string;
     evmScope: string;
     retryTx: boolean;
@@ -42,10 +44,6 @@ export default class EosEvmMiner {
             switch (this.config.minerFeeMode.toLowerCase()) {
                 case "cpu": {
                     this.priorityFeeMethod = this.priorityFeeFromCPU.bind(this);
-                    break;
-                }
-                case "proportion": {
-                    this.priorityFeeMethod = this.priorityFeeFromProportion.bind(this);
                     break;
                 }
                 case "fixed": {
@@ -79,22 +77,16 @@ export default class EosEvmMiner {
 
     priorityFeeFromCPU() {
         // Default to ~74.12 estimated from our benchmarks without OC
-        let gas_per_us = this.config.minerFeeParameter ? this.config.minerFeeParameter : 74;
+        let gas_per_us = this.config.gasPerCpu;
         if (gas_per_us == 0) {
             gas_per_us = 1;
         }
-        const fee = this.cpuCostPerUs / gas_per_us;
-        return Math.ceil(fee);
-    }
-
-    priorityFeeFromProportion() {
-        const proportion = this.config.minerFeeParameter ? this.config.minerFeeParameter : 0;
-        const fee = this.gasPrice * proportion;
+        const fee = this.cpuCostPerUs / gas_per_us * (1 + this.config.minerMarkupPercentage/100);
         return Math.ceil(fee);
     }
 
     priorityFeeFromFixedValue() {
-        const fee = this.config.minerFeeParameter ? this.config.minerFeeParameter : 0;
+        const fee = this.config.fixedMinerFee;
         return Math.ceil(fee);
     }
 

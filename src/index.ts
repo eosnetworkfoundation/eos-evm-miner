@@ -14,9 +14,11 @@ const {
     EVM_ACCOUNT = "eosio.evm",
     EVM_SCOPE = "eosio.evm",
     MINER_PERMISSION = "active",
+    GAS_PER_CPU = 74,
     EXPIRE_SEC = 60,
-    MINER_FEE_MODE, 
-    MINER_FEE_PARAMETER,
+    MINER_FEE_MODE = "fixed", // default to fixed 0 fee
+    FIXED_MINER_FEE = 0,
+    MINER_MARKUP_PERCENTAGE = 0,
     RETRY_TX = "true",
 } = process.env;
 
@@ -33,10 +35,6 @@ const rpcEndpoints:Array<string> = RPC_ENDPOINTS.split('|');
 if(!rpcEndpoints.length) quit('Not enough RPC_ENDPOINTS');
 
 let retryTx:boolean = RETRY_TX === "true";
-let minerFeeParameter:number = undefined;
-if (MINER_FEE_PARAMETER) {
-    minerFeeParameter = parseFloat(MINER_FEE_PARAMETER)
-}
 
 const eosEvmMiner = new EosEvmMiner({
     privateKey: PRIVATE_KEY,
@@ -45,7 +43,9 @@ const eosEvmMiner = new EosEvmMiner({
     rpcEndpoints,
     expireSec: +EXPIRE_SEC,
     minerFeeMode: MINER_FEE_MODE,
-    minerFeeParameter: minerFeeParameter,
+    fixedMinerFee: +FIXED_MINER_FEE,
+    gasPerCpu: +GAS_PER_CPU,
+    minerMarkupPercentage: +MINER_MARKUP_PERCENTAGE,
     evmAccount: EVM_ACCOUNT,
     evmScope: EVM_SCOPE,
     retryTx: retryTx,

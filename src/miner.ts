@@ -37,7 +37,7 @@ export default class EosEvmMiner {
     enforcedPriorityFee: number = 0;
     priorityFeeQueue: Array<[number, number]> = [];
 
-    priorityFeeMethod: () => number = undefined;
+    priorityFeeMethod: () => Promise<number> = undefined;
 
     constructor(public readonly config: MinerConfig) {
         if (this.config.minerFeeMode) {
@@ -69,13 +69,21 @@ export default class EosEvmMiner {
         return Math.min(...this.priorityFeeQueue.map(x => x[1]));
     }
 
-    getSafeGasPrice() {
+    getMaxQueuedPriorityFee() {
+        // Return a price that is safe for a while.
+        // The max of the queued price can make sure no matter when the tx is processed before or after the price change, the value is enough.
+        return Math.max(...this.priorityFeeQueue.map(x => x[1]));
+    }
+
+    getMaxQueuedBaseGasPrice() {
         // Return a price that is safe for a while.
         // The max of the queued price can make sure no matter when the tx is processed before or after the price change, the value is enough.
         return Math.max(this.gasPrice, this.maxQueuedPrice);
     }
 
-    priorityFeeFromCPU() {
+    async priorityFeeFromCPU() {
+        // Refresh cpu price first
+        await this.queryCpuPrice();
         // Default to ~74.12 estimated from our benchmarks without OC
         let gas_per_us = this.config.gasPerCpu;
         if (gas_per_us == 0) {
@@ -85,7 +93,7 @@ export default class EosEvmMiner {
         return Math.ceil(fee);
     }
 
-    priorityFeeFromFixedValue() {
+    async priorityFeeFromFixedValue() {
         const fee = this.config.fixedMinerFee;
         return Math.ceil(fee);
     }
@@ -105,12 +113,12 @@ export default class EosEvmMiner {
         this.priorityFeeQueue = newQueue;
     }
 
-    calcPriorityFee() {
+    async calcPriorityFee() {
         // Calculate new priority fee based on config. 
         // Default fee to 0 if config not set properly.
         let newPriorityFee = 0;
         if (this.priorityFeeMethod && this.check1559Enabled()) {
-            newPriorityFee = this.priorityFeeMethod();
+            newPriorityFee = await this.priorityFeeMethod();
         }
 
         logger.info("New priority fee: " + newPriorityFee);
@@ -212,14 +220,12 @@ export default class EosEvmMiner {
                 })
                 this.session = session;
 
-                // Call without await so that those calls will not block.
-                // Currently, the protocol is desined in a way that it can handle calls prepared with older parameters.
-                // So it's fine that we make some calls during the process of updatiing those settings.
-                this.queryCpuPrice();
-                this.queryContractStates();
+
+                
+                await this.queryContractStates();
 
                 // Refresh price
-                this.calcPriorityFee();
+                await this.calcPriorityFee();
                 break;
             } catch (e) {
                 logger.error("Error getting info from " + this.config.rpcEndpoints[i] + ": " + e);
@@ -297,17 +303,17 @@ export default class EosEvmMiner {
     }
 
     async eth_gasPrice(params: any[]) {
-        // Reference price = a price that will be safe for a while + current priority fee
+        // Return a price that will be safe for a while by using the max stored price in both queue.
         // The queued base price and priority fee should be 0 when 1559 not enabled. 
         // In that case, the return value should be the fixed valued stored in the contract as before.
-        const price = this.getSafeGasPrice() + this.priorityFee
+        const price = this.getMaxQueuedBaseGasPrice() + this.getMaxQueuedPriorityFee()
         return "0x" + price.toString(16);
     }
 
     async eth_maxPriorityFeePerGas(params: any[]) {
-        // Return the current priority fee in this call.
+        // Return max stored proirity fees so that this value is safe for a while
         // The return value shuld be 0x0 if 1559 not enabled.
-        return "0x" + this.priorityFee.toString(16);
+        return "0x" + this.getMaxQueuedPriorityFee().toString(16);
     }
 }
 

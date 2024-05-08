@@ -65,15 +65,13 @@ export default class EosEvmMiner {
     }
 
     getEnforcedPriorityFee() {
-        // We will only enforce the lowest price in the queue. 
-        // In this way, no matter the user specify the current or earlier value, the tx will go through.
-        return Math.min(...this.priorityFeeQueue.map(x => x[1]));
+        return this.priorityFee;
     }
 
     getMaxQueuedPriorityFee() {
         // Return a price that is safe for a while.
         // The max of the queued price can make sure no matter when the tx is processed before or after the price change, the value is enough.
-        return Math.max(...this.priorityFeeQueue.map(x => x[1]));
+        return Math.max(this.priorityFee, ...this.priorityFeeQueue.map(x => x[1]));
     }
 
     getMaxQueuedBaseGasPrice() {
@@ -100,18 +98,24 @@ export default class EosEvmMiner {
     }
 
     savePriorityFee(newPriorityFee) {
-        const lastPriorityFee = this.priorityFee;
-        this.priorityFee = newPriorityFee;
+        const refTime = Date.now();
 
-        // Only save prices in 60s.
-        const newQueue = this.priorityFeeQueue.filter(x => x[0] > Date.now() - 60 * 1000);
-        // Always leave at least one old value to avoid sudden changes.
-        if (newQueue.length == 0) {
-            newQueue.push([Date.now() - 1, lastPriorityFee])
+        this.priorityFeeQueue.push([refTime + 60 * 1000, newPriorityFee]);
+
+        // Process queue
+        let activeFee = undefined
+        while (this.priorityFeeQueue.length > 0) {
+            if (this.priorityFeeQueue[0][0] <= refTime) {
+                activeFee = this.priorityFeeQueue.shift()
+            }
+            else {
+                break;
+            }
         }
-        newQueue.push([Date.now(), this.priorityFee]);
 
-        this.priorityFeeQueue = newQueue;
+        if (activeFee) {
+            this.priorityFee = activeFee[1]
+        }
     }
 
     async calcPriorityFee() {

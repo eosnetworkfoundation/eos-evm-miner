@@ -10,7 +10,6 @@ const {
     MINER_ACCOUNT, 
     RPC_ENDPOINTS, 
     PORT = 50305, 
-    LOCK_GAS_PRICE = "true",
     EVM_ACCOUNT = "eosio.evm",
     EVM_SCOPE = "eosio.evm",
     MINER_PERMISSION = "active",
@@ -18,6 +17,7 @@ const {
     EXPIRE_SEC = 60,
     MINER_FEE_MODE = "fixed", // default to fixed 0 fee
     FIXED_MINER_FEE = 0,
+    GAS_TOKEN_EXCHANGE_RATE = 1, // If EOS is the gas token, the exchange rate is 1
     MINER_MARKUP_PERCENTAGE = 0,
     RETRY_TX = "true",
 } = process.env;
@@ -46,6 +46,7 @@ const eosEvmMiner = new EosEvmMiner({
     fixedMinerFee: +FIXED_MINER_FEE,
     gasPerCpu: +GAS_PER_CPU,
     minerMarkupPercentage: +MINER_MARKUP_PERCENTAGE,
+    gasTokenExchangeRate: +GAS_TOKEN_EXCHANGE_RATE,
     evmAccount: EVM_ACCOUNT,
     evmScope: EVM_SCOPE,
     retryTx: retryTx,

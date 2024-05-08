@@ -16,6 +16,7 @@ export interface MinerConfig {
     fixedMinerFee: number;
     gasPerCpu: number;
     minerMarkupPercentage: number;
+    gasTokenExchangeRate: number;
     evmAccount: string;
     evmScope: string;
     retryTx: boolean;
@@ -89,7 +90,7 @@ export default class EosEvmMiner {
         if (gas_per_us == 0) {
             gas_per_us = 1;
         }
-        const fee = this.cpuCostPerUs / gas_per_us * (1 + this.config.minerMarkupPercentage/100);
+        const fee = this.cpuCostPerUs / gas_per_us * (1 + this.config.minerMarkupPercentage/100) * this.config.gasTokenExchangeRate;
         return Math.ceil(fee);
     }
 

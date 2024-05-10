@@ -35,7 +35,6 @@ export default class EosEvmMiner {
 
     cpuCostPerUs: number = 314000000000; // ~314 Gwei, average EOS cost per us in a base utilization of 10% and miner utilization of 3%
     priorityFee: number = 0;
-    enforcedPriorityFee: number = 0;
     priorityFeeQueue: Array<[number, number]> = [];
 
     priorityFeeMethod: () => Promise<number> = undefined;
@@ -62,10 +61,6 @@ export default class EosEvmMiner {
 
     check1559Enabled() {
         return this.evmVersion > 0;
-    }
-
-    getEnforcedPriorityFee() {
-        return this.priorityFee;
     }
 
     getMaxQueuedPriorityFee() {
@@ -115,6 +110,7 @@ export default class EosEvmMiner {
 
         if (activeFee) {
             this.priorityFee = activeFee[1]
+            logger.info("Priority fee activated: " + this.priorityFee);
         }
     }
 
@@ -128,9 +124,6 @@ export default class EosEvmMiner {
 
         logger.info("New priority fee: " + newPriorityFee);
         this.savePriorityFee(newPriorityFee);
-
-        this.enforcedPriorityFee = this.getEnforcedPriorityFee();
-        logger.info("Priority enforced: " + this.enforcedPriorityFee);
     }
 
     async queryContractStates() {
@@ -252,7 +245,7 @@ export default class EosEvmMiner {
                     data: {
                         miner: this.config.minerAccount,
                         rlptx,
-                        ...this.check1559Enabled() && { min_inclusion_price: this.enforcedPriorityFee }
+                        ...this.check1559Enabled() && { min_inclusion_price: this.priorityFee }
                     }
                 }
             ],

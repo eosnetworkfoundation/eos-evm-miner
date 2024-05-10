@@ -95,7 +95,7 @@ export default class EosEvmMiner {
     savePriorityFee(newPriorityFee) {
         const refTime = Date.now();
 
-        this.priorityFeeQueue.push([refTime + 60 * 1000, newPriorityFee]);
+        this.priorityFeeQueue.push([refTime + 180 * 1000, newPriorityFee]);
 
         // Process queue
         let activeFee = undefined

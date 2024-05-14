@@ -14,7 +14,7 @@ export interface MinerConfig {
     expireSec: number;
     minerFeeMode: string;
     fixedMinerFee: number;
-    gasPerCpu: number;
+    gasPerUs: number;
     minerMarkupPercentage: number;
     gasTokenExchangeRate: number;
     evmAccount: string;
@@ -79,7 +79,7 @@ export default class EosEvmMiner {
         // Refresh cpu price first
         await this.queryCpuPrice();
         // Default to ~74.12 estimated from our benchmarks without OC
-        let gas_per_us = this.config.gasPerCpu;
+        let gas_per_us = this.config.gasPerUs;
         if (gas_per_us == 0) {
             gas_per_us = 1;
         }

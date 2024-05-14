@@ -8,11 +8,19 @@ For every transaction that you relay you will receive a reward in the form of EO
 
 | Name | Description                                                                                                       | Default |
 | --- |-------------------------------------------------------------------------------------------------------------------|---------|
-| `PRIVATE_KEY` | The private key of the miner account                                                                              |         |
-| `MINER_ACCOUNT` | The name of the miner account on the EOS Network                                                                  |         |
-| `RPC_ENDPOINTS` | A list of EOS RPC endpoints to connect to, comma-delimited                                                        |         |
-| `PORT` | The port to listen on for incoming Ethereum transactions                                                          | `50305` |
-| `LOCK_GAS_PRICE` | If set to `true`, one a gas price is set, this miner will not hit the EOS API node again to fetch a new gas price | `true`  |
+| `PRIVATE_KEY` | The private key of the miner account.                                                                              |         |
+| `MINER_ACCOUNT` | The name of the miner account on the EOS Network.                                                                  |         |
+| `RPC_ENDPOINTS` | A list of EOS RPC endpoints to connect to, comma-delimited. The list is a failover. list.                                                        |         |
+| `PORT` | The port to listen on for incoming Ethereum transactions.                                                          | `50305` |
+| `EVM_ACCOUNT` | | `eosio.evm` |
+| `EVM_SCOPE` | |  |
+| `MINER_FEE_MODE` | Set how the miner collect fees after EOS-EVM upgrading to version 1. Can be `CPU` or `FIXED`.  | `FIXED` |
+| `GAS_PER_CPU` | priority_fee = cpu_per_us / GAS_PER_CPU * (1 + MINER_MARKUP_PERCENTAGE/100) * GAS_TOKEN_EXCHANGE_RATE if MINER_FEE_MODE=`CPU` | 74 |
+| `MINER_MARKUP_PERCENTAGE` | priority_fee = cpu_per_us / GAS_PER_CPU * (1 + MINER_MARKUP_PERCENTAGE/100) * GAS_TOKEN_EXCHANGE_RATE if MINER_FEE_MODE=`CPU` | 0 |
+| `GAS_TOKEN_EXCHANGE_RATE` | priority_fee = cpu_per_us / GAS_PER_CPU * (1 + MINER_MARKUP_PERCENTAGE/100) * GAS_TOKEN_EXCHANGE_RATE if MINER_FEE_MODE=`CPU` | 1 |
+| `FIXED_MINER_FEE` | Fixed priority_fee in wei if MINER_FEE_MODE=`FIXED`. | 0 | 
+| `EXPIRE_SEC` | Expiration time when broadcasting EOS transaction. | 60 |
+| `RETRY_TX` | Whether local Leap node should retry when broadcasting failed. | true |
 
 ## Usage
 

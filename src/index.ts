@@ -13,7 +13,7 @@ const {
     EVM_ACCOUNT = "eosio.evm",
     EVM_SCOPE = "eosio.evm",
     MINER_PERMISSION = "active",
-    GAS_PER_CPU = 74,
+    GAS_PER_US = 74,
     EXPIRE_SEC = 60,
     MINER_FEE_MODE = "fixed", // default to fixed 0 fee
     FIXED_MINER_FEE = 0,
@@ -44,7 +44,7 @@ const eosEvmMiner = new EosEvmMiner({
     expireSec: +EXPIRE_SEC,
     minerFeeMode: MINER_FEE_MODE,
     fixedMinerFee: +FIXED_MINER_FEE,
-    gasPerCpu: +GAS_PER_CPU,
+    gasPerUs: +GAS_PER_US,
     minerMarkupPercentage: +MINER_MARKUP_PERCENTAGE,
     gasTokenExchangeRate: +GAS_TOKEN_EXCHANGE_RATE,
     evmAccount: EVM_ACCOUNT,

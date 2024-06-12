@@ -20,6 +20,7 @@ const {
     GAS_TOKEN_EXCHANGE_RATE = 1, // If EOS is the gas token, the exchange rate is 1
     MINER_MARKUP_PERCENTAGE = 0,
     RETRY_TX = "true",
+    PRICING_ENDPOINTS,
 } = process.env;
 
 const quit = (error:string) => {
@@ -50,6 +51,7 @@ const eosEvmMiner = new EosEvmMiner({
     evmAccount: EVM_ACCOUNT,
     evmScope: EVM_SCOPE,
     retryTx: retryTx,
+    pricingEndpoings: PRICING_ENDPOINTS,
 });
 
 const server = new jayson.Server({

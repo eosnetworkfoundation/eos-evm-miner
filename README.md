@@ -21,6 +21,7 @@ For every transaction that you relay you will receive a reward in the form of EO
 | `FIXED_MINER_FEE` | Fixed priority_fee in wei if MINER_FEE_MODE=`FIXED`. | 0 | 
 | `EXPIRE_SEC` | Expiration time when broadcasting EOS transaction. | 60 |
 | `RETRY_TX` | Whether local Leap node should retry when broadcasting failed. | true |
+| `PRICING_ENDPOINTS` | Endpoints used for querying CPU price. Mainly for tests. Only ONE url instead of a list should be put here. | null |
 
 ## Usage
 

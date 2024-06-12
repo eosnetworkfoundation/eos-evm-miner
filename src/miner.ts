@@ -20,6 +20,7 @@ export interface MinerConfig {
     evmAccount: string;
     evmScope: string;
     retryTx: boolean;
+    pricingEndpoings: string;
 }
 
 export default class EosEvmMiner {
@@ -202,11 +203,19 @@ export default class EosEvmMiner {
                 this.rpc = rpc;
                 logger.info("setting RPC endpoint to " + this.config.rpcEndpoints[i]);
 
-                this.resources = new Resources({
-                    api: this.rpc,
-                    sampleAccount: "eosio.reserv",
-                })
-
+                if (this.config.pricingEndpoings) {
+                    this.resources = new Resources({
+                        api: new APIClient({ url: this.config.pricingEndpoings }),
+                        sampleAccount: "eosio.reserv",
+                    })
+                }
+                else {
+                    this.resources = new Resources({
+                        api: this.rpc,
+                        sampleAccount: "eosio.reserv",
+                    })
+                }
+                
                 const session = new Session({
                     actor: this.config.minerAccount,
                     permission: this.config.minerPermission,

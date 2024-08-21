@@ -142,7 +142,7 @@ export default class EosEvmMiner {
             logger.info("Gas price: " + this.gasPrice);
 
             if (result.rows[0].evm_version != undefined) {
-                this.evmVersion = parseInt(result.rows[0].evm_version);
+                this.evmVersion = parseInt(result.rows[0].evm_version.cached_version);
                 logger.info("EVM version: " + this.evmVersion);
             }
             else {
@@ -163,8 +163,8 @@ export default class EosEvmMiner {
                     show_payer: false
                 });
 
-                if (result.rows.length > 0) {
-                    const price_queue = result.rows.map(x => parseInt(x.price));
+                if (priceQueueResult.rows.length > 0) {
+                    const price_queue = priceQueueResult.rows.map(x => parseInt(x.price));
                     this.maxQueuedPrice = Math.max(...price_queue);
                 }
                 else {
